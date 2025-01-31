@@ -262,23 +262,22 @@ impl<'map, 'wait, K: PartialEq, V, Lock: ScopedRawMutex> Wait<'map, K, V, Lock> 
     ///
     /// ```ignore
     /// use std::sync::Arc;
+    /// use std::pin::pin;
     /// use maitake::scheduler;
     /// use maitake_sync::wait_map::{WaitMap, WakeOutcome};
-    /// use futures_util::pin_mut;
     ///
     /// let scheduler = Scheduler::new();
     /// let q = Arc::new(WaitMap::new());
     ///
     /// let q2 = q.clone();
     /// scheduler.spawn(async move {
-    ///     let wait = q2.wait(0);
+    ///     let mut wait = pin!(q2.wait(0));
     ///
     ///     // At this point, we have created the future, but it has not yet
     ///     // been added to the queue. We could immediately await 'wait',
     ///     // but then we would be unable to progress further. We must
     ///     // first pin the `wait` future, to ensure that it does not move
     ///     // until it has been completed.
-    ///     pin_mut!(wait);
     ///     wait.as_mut().subscribe().await.unwrap();
     ///
     ///     // We now know the waiter has been enqueued, at this point we could

@@ -1,7 +1,11 @@
 use super::super::*;
 use crate::loom::sync::Arc;
-use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-use futures::{future::poll_fn, pin_mut, select_biased, FutureExt};
+use core::{
+    future,
+    pin::pin,
+    sync::atomic::{AtomicBool, AtomicUsize, Ordering},
+};
+use futures_util::{select_biased, FutureExt};
 use tokio_test::{assert_pending, assert_ready, assert_ready_err, task};
 
 #[test]
@@ -31,9 +35,7 @@ fn enqueue() {
     let mut waiter2 = task::spawn({
         let q = q.clone();
         async move {
-            let wait = q.wait(1);
-
-            pin_mut!(wait);
+            let mut wait = pin!(q.wait(1));
             wait.as_mut().subscribe().await.unwrap();
             ENQUEUED.fetch_add(1, Ordering::Relaxed);
 
@@ -78,9 +80,7 @@ fn duplicate() {
     let mut waiter1 = task::spawn({
         let q = q.clone();
         async move {
-            let wait = q.wait(0);
-
-            pin_mut!(wait);
+            let mut wait = pin!(q.wait(0));
             wait.as_mut().subscribe().await.unwrap();
             ENQUEUED.fetch_add(1, Ordering::Relaxed);
 
@@ -95,9 +95,7 @@ fn duplicate() {
         let q = q.clone();
         async move {
             // Duplicate key!
-            let wait = q.wait(0);
-
-            pin_mut!(wait);
+            let mut wait = pin!(q.wait(0));
             wait.as_mut().subscribe().await
         }
     });
@@ -345,19 +343,18 @@ fn drop_wake_bailed() {
         .map(|i| {
             let q = q.clone();
             task::spawn(async move {
-                let mut bail_fut = poll_fn(|_| match BAIL.load(Ordering::Relaxed) {
+                let mut bail_fut = future::poll_fn(|_| match BAIL.load(Ordering::Relaxed) {
                     false => Poll::Pending,
                     true => Poll::Ready(()),
                 })
                 .fuse();
 
-                let wait_fut = q
+                let mut wait_fut = pin!(q
                     .wait(CountDropKey {
                         idx: i,
                         cnt: &KEY_DROPS,
                     })
-                    .fuse();
-                pin_mut!(wait_fut);
+                    .fuse());
 
                 // NOTE: `select_baised is used specifically to ensure the bail
                 // future is processed first.

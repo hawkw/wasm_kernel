@@ -46,7 +46,6 @@ tracing = { version = "0.1", default-features = false }
 
 [dev-dependencies]
 futures-util = "0.3"
-futures = "0.3"
 tokio-test = "0.4"
 tracing = { version = "0.1", default-features = false, features = ["std"] }
 tracing-subscriber = { version = "0.3.11", features = ["fmt", "env-filter"] }

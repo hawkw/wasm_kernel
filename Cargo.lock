@@ -1426,8 +1426,6 @@ version = "0.1.0"
 dependencies = [
  "console-subscriber",
  "cordyceps",
- "futures",
- "futures-util",
  "loom",
  "maitake-sync",
  "mycelium-bitfield",
@@ -1448,7 +1446,6 @@ version = "0.2.0"
 dependencies = [
  "cordyceps",
  "critical-section",
- "futures",
  "futures-util",
  "loom",
  "mutex-traits",

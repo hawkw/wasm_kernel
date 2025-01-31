@@ -190,8 +190,8 @@ fn wake_mixed() {
 
 #[test]
 fn drop_wait_future() {
-    use futures_util::future::poll_fn;
-    use std::future::Future;
+    use std::future::poll_fn;
+    use std::pin::pin;
     use std::task::Poll;
 
     loom::model(|| {
@@ -200,7 +200,7 @@ fn drop_wait_future() {
         let thread1 = thread::spawn({
             let q = q.clone();
             move || {
-                let mut wait = Box::pin(q.wait());
+                let mut wait = pin!(q.wait());
 
                 future::block_on(poll_fn(|cx| {
                     if wait.as_mut().poll(cx).is_ready() {

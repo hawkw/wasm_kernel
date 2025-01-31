@@ -42,10 +42,11 @@ fn task_is_valid_for_casts() {
 fn empty_task_size() {
     use core::{
         any::type_name,
+        future,
         mem::{size_of, size_of_val},
     };
 
-    type Future = futures::future::Ready<()>;
+    type Future = future::Ready<()>;
     type EmptyTask = Task<NopSchedule, Future, BoxStorage>;
 
     println!(
@@ -63,7 +64,7 @@ fn empty_task_size() {
         size_of::<EmptyTask>() - size_of::<Future>()
     );
 
-    let task = Task::<Scheduler, Future, BoxStorage>::new(futures::future::ready(()));
+    let task = Task::<Scheduler, Future, BoxStorage>::new(future::ready(()));
     println!("\nTask {{ // {}B", size_of_val(&task));
     println!(
         "    schedulable: Schedulable {{ // {}B",

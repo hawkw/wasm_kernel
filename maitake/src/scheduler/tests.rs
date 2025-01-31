@@ -4,7 +4,7 @@ use crate::{
     loom::sync::atomic::{AtomicUsize, Ordering::Relaxed},
     sync::WaitCell,
 };
-use core::task::Poll;
+use core::{pin::pin, task::Poll};
 use std::sync::Arc;
 
 #[cfg(all(feature = "alloc", not(loom)))]
@@ -35,13 +35,12 @@ impl Chan {
     pub(crate) async fn wait(self: Arc<Chan>) {
         let this = Arc::downgrade(&self);
         drop(self);
-        futures_util::future::poll_fn(move |cx| {
+        future::poll_fn(move |cx| {
             let Some(this) = this.upgrade() else {
                 return Poll::Ready(());
             };
 
-            let res = this.task.wait();
-            futures_util::pin_mut!(res);
+            let res = pin!(this.task.wait());
 
             if this.num_notify == this.num.load(Relaxed) {
                 return Poll::Ready(());

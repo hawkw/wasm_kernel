@@ -73,7 +73,7 @@ fn wake_close() {
 
 #[test]
 fn wake_and_drop() {
-    use futures::FutureExt;
+    use futures_util::FutureExt;
     loom::model(|| {
         // use `Arc`s as the value type to ensure their destructors are run.
         let q = Arc::new(WaitMap::<usize, Arc<()>>::new());

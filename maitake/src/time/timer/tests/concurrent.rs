@@ -1,10 +1,10 @@
 use super::*;
 use crate::loom::{sync::Arc, thread};
 use core::{
-    future::Future,
+    future::{self, Future},
+    pin::pin,
     task::{Context, Poll},
 };
-use futures_util::{future, pin_mut};
 
 #[cfg(loom)]
 use loom::future::block_on;
@@ -116,8 +116,7 @@ fn two_sleeps_sequential() {
 fn cancel_polled_sleeps() {
     fn poll_and_cancel(timer: Arc<Timer>) {
         block_on(async move {
-            let sleep = timer.sleep_ticks(15);
-            pin_mut!(sleep);
+            let mut sleep = pin!(timer.sleep_ticks(15));
             future::poll_fn(move |cx| {
                 // poll once to register the sleep with the timer wheel, and
                 // then return `Ready` so it gets canceled.
@@ -164,8 +163,7 @@ fn reregister_waker() {
             let clock = clock.test_clock();
             move || {
                 let _clock = clock.enter();
-                let sleep = timer.sleep(Duration::from_secs(1));
-                pin_mut!(sleep);
+                let mut sleep = pin!(timer.sleep(Duration::from_secs(1)));
                 // poll the sleep future initially with a no-op waker.
                 let _ = sleep.as_mut().poll(&mut Context::from_waker(
                     futures_util::task::noop_waker_ref(),
