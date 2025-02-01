@@ -309,13 +309,13 @@ mod cs_impl {
         #[track_caller]
         #[inline(always)]
         fn with_lock<R>(&self, f: impl FnOnce() -> R) -> R {
-            self.0.with_lock(|| critical_section::with(|_cs| f()))
+            critical_section::with(|_cs| self.0.with_lock(f))
         }
 
         #[track_caller]
         #[inline(always)]
         fn try_with_lock<R>(&self, f: impl FnOnce() -> R) -> Option<R> {
-            self.0.try_with_lock(|| critical_section::with(|_cs| f()))
+            critical_section::with(|_cs| self.0.try_with_lock(f))
         }
 
         #[inline]
